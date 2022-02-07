@@ -75,7 +75,9 @@ class Scanner(threading.Thread):
     
     def get_thread_info(self):
         thread_info = f"{self.coin.upper()}USDT --- {self.minor_tf[0]}"
-        thread_info += f", {self.major_tf[0]} timeframes" if self.tf_continuity else " timeframe"
+        thread_info += f"& {self.major_tf[0]} timeframes" if self.tf_continuity else " timeframe"
+        thread_info += f" --- Timeframe Continuity: "
+        thread_info += f"Yes" if self.tf_continuity else "No"
         return(thread_info)
 
     def run_scanner(self):

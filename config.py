@@ -2,7 +2,7 @@ import constants
 
 config = {
 
-    "print_to_txt": True,
+    "print_to_txt_file": True,
 
     "coins": {
         "btc": {
