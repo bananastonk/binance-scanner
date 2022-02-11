@@ -2,14 +2,12 @@ import constants
 
 config = {
 
-    "print_to_txt": True,
-
     "coins": {
         "btc": {
-            "minor_timeframe": "1h",
+            "minor_timeframe": "1m",
             "major_timeframe": "12h",
             "timeframe_continuity": False,
-            "minimum_reward_to_risk": 0.75, 
+            "minimum_reward_to_risk": 0.01, 
         },
         "eth": {
             "minor_timeframe": "30m",
