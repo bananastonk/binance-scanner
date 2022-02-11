@@ -46,12 +46,16 @@ def get_setups(config):
             ) if (config["scan_for"][pattern] is True) else None
     return setups
 
-def get_flows(config, sentiment):
+def get_flows(config):
     flows = []
     for pattern in config["setups_configuration"]:
         for setup in config["setups_configuration"][pattern]:
-            flow = [agg_dir[1] for agg_dir in setup["setup"]]
+            flow_details = {}
+            flow = [agg_dir[0] for agg_dir in setup["setup"]]
             flow.append(setup["major_triggered"])
-            flows.append(flow) if setup["sentiment"] is sentiment else None
+            flow_details["flow"] = flow
+            flow_details["sentiment"] = setup["sentiment"]
+            flow_details["desc"] = setup["desc"]
+            flows.append(flow_details)
     return flows
 

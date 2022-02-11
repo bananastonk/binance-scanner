@@ -19,6 +19,8 @@ class Scanner(threading.Thread):
         self.records = records
 
         self.major_flow = None
+        self.major_sentiment = constants.NEUTRAL
+
         self.minor_klines_s = download_klines(coin, minor_tf, constants.MAX_KLINES_MINOR)
         self.major_klines_s = download_klines(coin, major_tf, constants.MAX_KLINES_MAJOR)
         self.mapping = {
@@ -48,8 +50,7 @@ class Scanner(threading.Thread):
         open_str += f"      Minimum setup R:R of: {self.rr_ratio}\n"
         open_str += f"      Trading with full timeframe continuity...\n" if self.tf_continuity else ""
         print(open_str)
-        print()
-
+        
     def on_error(self, ws, error):
         print(f"Error: {error}")
     
@@ -81,13 +82,13 @@ class Scanner(threading.Thread):
         return(thread_info)
 
     def run_scanner(self):
-        self.update_major_flow()
+        self.update_major_state()
         setup_s = self.find_setup()
 
         if setup_s is None:
             return
         
-        timeframe_continuity = (setup_s.get_sentiment == self.major_flow)
+        timeframe_continuity = (setup_s.get_sentiment == self.major_sentiment)
         if self.tf_continuity and not timeframe_continuity:
             return
             
@@ -102,7 +103,6 @@ class Scanner(threading.Thread):
 
         if alert_data not in self.records["alerts"]:
             self.records["alerts"].append(alert_data)
-        
 
     def get_trade_info(self, setup_s):
         sv = setup_s.get_setup_values(self.minor_klines_s)
@@ -112,18 +112,23 @@ class Scanner(threading.Thread):
         trade_info += f"        Trigger: {trigger}\n"
         trade_info += f"        Target: {target}\n"
         trade_info += f"        Stop: {stop}\n"
-        trade_info += f"        Reward ratio: {rr_ratio}\n"
+        trade_info += "        Reward ratio: {:.2f}\n".format(round(rr_ratio, 2))
+
+        # matching timeframe continuity already checked...
+        if self.tf_continuity: 
+            trade_info += f"        Timeframe continuity!\n"
+            trade_info += f"                {self.major_flow}"
+            
         return trade_info
 
-    def update_major_flow(self):
+    def update_major_state(self):
         relative_directions = self.major_klines_s.get_relative_directions()
-        bullish = self.get_flow(relative_directions, constants.BULLISH)
-        bearish = self.get_flow(relative_directions, constants.BEARISH)
-        self.major_flow = constants.BULLISH if (bullish) else constants.BEARISH if (bearish) else constants.NEUTRAL
-            
-    def get_flow(self, relative_directions, sentiment):
-        for flow in self.flows[sentiment]:
-            if (relative_directions[-1 * len(flow):] == flow): return True
+        for flow in self.flows:
+            flow_dirs = flow["flow"]
+            if relative_directions[-1 * len(flow_dirs):] == flow_dirs:
+                self.major_flow = flow["desc"]
+                self.major_sentiment = flow["sentiment"]
+                return
 
     def find_setup(self):
         for setup in self.setups:
